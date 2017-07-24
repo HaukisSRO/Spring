@@ -4,6 +4,8 @@ import android.net.Uri
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
+import android.transition.Transition
+import android.view.MenuItem
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -27,6 +29,9 @@ class NoteDetailsActivity : AppCompatActivity() {
         setContentView(R.layout.activity_note_details)
         setSupportActionBar(toolbar)
 
+        gallery_fab.scaleX = 0F
+        gallery_fab.scaleY = 0F
+
         db.Init(this)
 
         note = db.GetNote(intent.getStringExtra("note_id"))
@@ -36,6 +41,20 @@ class NoteDetailsActivity : AppCompatActivity() {
         title_image.setImageURI(Uri.parse(note.titleImage))
 
         toolbar.title = note.name
+
+        gallery_fab.post {
+            val enterTransition = window.enterTransition
+            enterTransition.addListener(object : Transition.TransitionListener {
+                override fun onTransitionEnd(p0: Transition?) {
+                    gallery_fab.animate().scaleX(1F).scaleY(1F)
+                    enterTransition.removeListener(this)
+                }
+                override fun onTransitionResume(p0: Transition?) {}
+                override fun onTransitionPause(p0: Transition?) {}
+                override fun onTransitionCancel(p0: Transition?) {}
+                override fun onTransitionStart(p0: Transition?) {}
+            })
+        }
     }
 
     fun setUpLayout(){
@@ -63,6 +82,28 @@ class NoteDetailsActivity : AppCompatActivity() {
         tv.text = param.text
         tv.textScaleX = 0.8F
         param_wrapper.addView(tv)
+    }
+
+    override fun onBackPressed() {
+        gallery_fab.animate()
+                .scaleX(0F).scaleY(0F)
+                .withEndAction({
+                    supportFinishAfterTransition()
+                })
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            android.R.id.home -> {
+                gallery_fab.animate()
+                        .scaleX(0F).scaleY(0F)
+                        .withEndAction({
+                            supportFinishAfterTransition()
+                        })
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 
 }
