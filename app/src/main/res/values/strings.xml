@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">Spring</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="photos">Photos</string>
+    <string name="videos">Videos</string>
+    <string name="create_media">Create...</string>
+    <string name="pick_media">Pick...</string>
+    <string name="title_activity_note_details">NoteDetailsActivity</string>
+    <string name="title_activity_template_create">TemplateCreateActivity</string>
+    <string name="note_name">Note name</string>
+    <string name="add_parameter">Add parameter</string>
+    <string name="share">Share</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="title_activity_note_create">NoteCreateActivity</string>
+    <string name="tab_text_1">Tab 1</string>
+    <string name="tab_text_2">Tab 2</string>
+    <string name="tab_text_3">Tab 3</string>
+    <string name="section_format">Hello World from section: %1$d</string>
+</resources>

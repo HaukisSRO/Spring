@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/create_media"
+        android:title="@string/create_media"
+        android:icon="@drawable/ic_menu_photo"/>
+    <item
+        android:id="@+id/select_media"
+        android:title="@string/pick_media"
+        android:icon="@drawable/ic_gallery"/>
+</menu>
