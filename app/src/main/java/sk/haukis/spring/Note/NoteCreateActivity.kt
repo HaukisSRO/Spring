@@ -9,14 +9,21 @@ import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
 import android.support.v4.view.ViewPager
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import kotlinx.android.synthetic.main.activity_note_create.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import sk.haukis.spring.API.SpringApi
+import sk.haukis.spring.Models.Note
 
 import sk.haukis.spring.R
 import sk.haukis.spring.commons.CameraFragment
 import sk.haukis.spring.commons.removeFragment
+import sk.haukis.spring.commons.unwrapCall
 import java.util.*
 
 class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTemplateChooseListener, NoteMediaFragment.OpenCameraListener {
@@ -26,7 +33,8 @@ class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTempl
     val noteMedia : NoteMediaFragment = NoteMediaFragment()
     val noteCreate : NoteCreateFragment = NoteCreateFragment()
     val camera : CameraFragment = CameraFragment()
-    val NoteId = UUID.randomUUID().toString()
+    var NoteId = UUID.randomUUID().toString()
+    lateinit var springApi : SpringApi
 
     override fun onTemplateChoose(id: Int) {
         tabs.visibility = View.VISIBLE
@@ -78,8 +86,27 @@ class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTempl
 
         container.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tabs))
         tabs.addOnTabSelectedListener(TabLayout.ViewPagerOnTabSelectedListener(container))
+
+        springApi = SpringApi(this)
+
+        save_note.setOnClickListener {
+            saveNote()
+        }
     }
 
+    fun saveNote(){
+        val note = noteCreate.getNote()
+        note.id = NoteId
+        val noteSaveCall = springApi.createNote(note)
+        noteSaveCall.enqueue(object: Callback<Note> {
+            override fun onFailure(call: Call<Note>?, t: Throwable?) {
+            }
+
+            override fun onResponse(call: Call<Note>?, response: Response<Note>?) {
+                Log.e("NoteCreate", "Saved ${note.name}")
+            }
+        })
+    }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -122,5 +149,10 @@ class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTempl
         override fun getCount(): Int {
             return fragmentList.size
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        NoteId = UUID.randomUUID().toString()
     }
 }

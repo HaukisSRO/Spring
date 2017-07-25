@@ -27,7 +27,6 @@ class NoteDetailsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_note_details)
-        setSupportActionBar(toolbar)
 
         gallery_fab.scaleX = 0F
         gallery_fab.scaleY = 0F
@@ -37,10 +36,13 @@ class NoteDetailsActivity : AppCompatActivity() {
         note = db.GetNote(intent.getStringExtra("note_id"))
 
         setUpLayout()
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
         title_image.setImageURI(Uri.parse(note.titleImage))
 
         toolbar.title = note.name
+
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
 
         gallery_fab.post {
             val enterTransition = window.enterTransition

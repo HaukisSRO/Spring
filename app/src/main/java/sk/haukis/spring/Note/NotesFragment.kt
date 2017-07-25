@@ -8,6 +8,7 @@ import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.StaggeredGridLayoutManager
 import android.support.v7.widget.helper.ItemTouchHelper
+import android.transition.*
 import android.util.Log
 import android.view.*
 import co.metalab.asyncawait.async
@@ -19,6 +20,7 @@ import sk.haukis.spring.API.DB
 import sk.haukis.spring.API.SpringApi
 import sk.haukis.spring.Models.Note
 import sk.haukis.spring.R
+import sk.haukis.spring.commons.PropagatingTransition
 
 
 /**
@@ -75,6 +77,7 @@ class NotesFragment : Fragment() {
         itemTouchHelper.attachToRecyclerView(notes_list)
 
         swipe_refresh_layout.setOnRefreshListener {
+
             RefreshList()
         }
     }
@@ -93,6 +96,14 @@ class NotesFragment : Fragment() {
 
                     notesAdapter.notifyDataSetChanged()
                     swipe_refresh_layout.isRefreshing = false
+                    PropagatingTransition(sceneRoot = notes_list,
+                            startingView = notes_list.getChildAt(0),
+                            transition = TransitionSet()
+                                    .addTransition(Fade(Fade.IN)
+                                            .setInterpolator { (it - 0.5f) * 2 })
+                                    .addTransition(Explode())
+                    )
+                            .start()
                 }
 
                 override fun onFailure(call: Call<ArrayList<Note>>?, t: Throwable?) {

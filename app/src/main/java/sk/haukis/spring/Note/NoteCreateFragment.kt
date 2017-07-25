@@ -24,6 +24,7 @@ class NoteCreateFragment : Fragment() {
 
     val db = DB()
     lateinit var scheme : ArrayList<SchemeParameter>
+    var schemeId : Int = 0
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
@@ -33,7 +34,7 @@ class NoteCreateFragment : Fragment() {
 
     fun Init(templateId: Int){
         db.Init(context)
-
+        schemeId = templateId
         val template = db.GetTemplate(templateId)
         scheme = SchemeParameter().parse(template.scheme!!)
         setUpParams()
@@ -51,6 +52,7 @@ class NoteCreateFragment : Fragment() {
 
     fun getNote() : Note {
         val note = Note()
+        note.templateId = schemeId
         val noteScheme = ArrayList<SchemeParameter>()
 
         note.name = note_name.text.toString()

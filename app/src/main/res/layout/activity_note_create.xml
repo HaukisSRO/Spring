@@ -47,4 +47,12 @@
         android:layout_height="match_parent"
         android:id="@+id/main_container"/>
 
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/save_note"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_save"/>
+
 </android.support.design.widget.CoordinatorLayout>
