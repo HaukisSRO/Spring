@@ -53,6 +53,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
+        android:transitionName="sharedFab"
         android:src="@drawable/ic_save"/>
 
 </android.support.design.widget.CoordinatorLayout>

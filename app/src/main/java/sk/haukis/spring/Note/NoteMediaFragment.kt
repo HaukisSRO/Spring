@@ -47,11 +47,11 @@ class NoteMediaFragment : Fragment() {
         })
     }
 
-    fun addImage(filePath: String){
+    fun addImage(filePath: Uri){
         val imageView : ImageView = ImageView(context)
         val p = LinearLayout.LayoutParams(300, 300)
         imageView.layoutParams = p
-        imageView.setImageURI(Uri.parse(filePath))
+        imageView.setImageURI(filePath)
         photos_wrapper.addView(imageView)
     }
 

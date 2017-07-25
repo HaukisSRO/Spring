@@ -27,6 +27,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_menu_photo"
+            android:elevation="0dp"
+            app:backgroundTint="@color/cameraTransparent"
+            app:borderWidth="0dp"
+            android:transitionName="sharedFab"
             android:tint="#fff" />
 
     </LinearLayout>

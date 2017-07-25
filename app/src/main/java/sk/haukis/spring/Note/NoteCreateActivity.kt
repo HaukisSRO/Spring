@@ -1,5 +1,6 @@
 package sk.haukis.spring.Note
 
+import android.net.Uri
 import android.support.design.widget.TabLayout
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.Toolbar
@@ -7,26 +8,27 @@ import android.support.v7.widget.Toolbar
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
-import android.support.v4.view.ViewPager
 import android.os.Bundle
+import android.transition.*
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import co.metalab.asyncawait.async
 import kotlinx.android.synthetic.main.activity_note_create.*
+import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import sk.haukis.spring.API.SpringApi
 import sk.haukis.spring.Models.Note
-
 import sk.haukis.spring.R
 import sk.haukis.spring.commons.CameraFragment
 import sk.haukis.spring.commons.removeFragment
-import sk.haukis.spring.commons.unwrapCall
 import java.util.*
+import kotlin.collections.ArrayList
 
-class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTemplateChooseListener, NoteMediaFragment.OpenCameraListener {
+class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTemplateChooseListener, NoteMediaFragment.OpenCameraListener, CameraFragment.MediaCreateListener {
 
     lateinit var mSectionsPagerAdapter: SectionsPagerAdapter
     val templateChooser : NoteSchemeChooseFragment = NoteSchemeChooseFragment()
@@ -34,17 +36,37 @@ class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTempl
     val noteCreate : NoteCreateFragment = NoteCreateFragment()
     val camera : CameraFragment = CameraFragment()
     var NoteId = UUID.randomUUID().toString()
+    val images : ArrayList<Uri> = ArrayList()
     lateinit var springApi : SpringApi
+
+    override fun onPhotoCreated(uri: Uri) {
+        images.add(uri)
+        noteMedia.addImage(uri)
+
+        tabs.visibility = View.VISIBLE
+        container.visibility = View.VISIBLE
+        toolbar.visibility = View.VISIBLE
+
+        supportFragmentManager.beginTransaction()
+                .remove(camera)
+                .commit()
+    }
 
     override fun onTemplateChoose(id: Int) {
         tabs.visibility = View.VISIBLE
         container.visibility = View.VISIBLE
+        toolbar.visibility = View.VISIBLE
         noteCreate.Init(id)
         this.removeFragment(templateChooser)
     }
 
     override fun onOpenCamera(method: Int) {
         tabs.visibility = View.GONE
+        toolbar.visibility = View.GONE
+        val bundle = Bundle()
+        bundle.putString("note_id", NoteId)
+        camera.arguments = bundle
+
         supportFragmentManager.beginTransaction()
                 .add(R.id.main_container, camera)
                 .commit()
@@ -97,15 +119,31 @@ class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTempl
     fun saveNote(){
         val note = noteCreate.getNote()
         note.id = NoteId
-        val noteSaveCall = springApi.createNote(note)
-        noteSaveCall.enqueue(object: Callback<Note> {
-            override fun onFailure(call: Call<Note>?, t: Throwable?) {
-            }
+        async {
+            val noteSaveCall = springApi.createNote(note)
+            noteSaveCall.enqueue(object : Callback<Note> {
+                override fun onFailure(call: Call<Note>?, t: Throwable?) {
+                }
 
-            override fun onResponse(call: Call<Note>?, response: Response<Note>?) {
-                Log.e("NoteCreate", "Saved ${note.name}")
-            }
-        })
+                override fun onResponse(call: Call<Note>?, response: Response<Note>?) {
+                    Log.e("NoteCreate", "Saved ${note.name}")
+                }
+            })
+        }
+        async {
+            val gallerySaveCall = springApi.addImages(NoteId, images)
+            gallerySaveCall.enqueue(object : Callback<ResponseBody>{
+                override fun onResponse(call: Call<ResponseBody>?, response: Response<ResponseBody>?) {
+                    Log.e("Photos", "saved")
+                }
+
+                override fun onFailure(call: Call<ResponseBody>?, t: Throwable?) {
+                }
+
+            })
+        }
+
+        finishAfterTransition()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -149,10 +187,5 @@ class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTempl
         override fun getCount(): Int {
             return fragmentList.size
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        NoteId = UUID.randomUUID().toString()
     }
 }

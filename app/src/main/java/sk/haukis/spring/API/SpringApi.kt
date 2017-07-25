@@ -3,6 +3,7 @@ package sk.haukis.spring.API
 import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
+import android.net.Uri
 import android.util.Log
 import okhttp3.*
 import retrofit2.Call
@@ -13,6 +14,7 @@ import sk.haukis.spring.Models.Note
 import okhttp3.logging.HttpLoggingInterceptor
 import sk.haukis.spring.Models.Template
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 
 /**
@@ -33,6 +35,9 @@ class SpringApi constructor(activity : Activity? = null) {
             val client = OkHttpClient().newBuilder()
                     .addInterceptor(AuthenticationInterceptor(accessToken))
                     .addInterceptor(logInterceptor)
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .writeTimeout(30, TimeUnit.SECONDS)
+                    .connectTimeout(30, TimeUnit.SECONDS)
                     .build()
 
             val retrofit = Retrofit.Builder()
@@ -70,9 +75,9 @@ class SpringApi constructor(activity : Activity? = null) {
         return a
     }
 
-    fun addImages(noteId : String, images : ArrayList<String>) : Call<ResponseBody> {
+    fun addImages(noteId : String, images : ArrayList<Uri>) : Call<ResponseBody> {
         val files : ArrayList<File> = ArrayList()
-        images.mapTo(files) { File(it) }
+        images.mapTo(files) { File(it.toString()) }
 
         val multipartImages : ArrayList<MultipartBody.Part> = ArrayList()
         files.mapTo(multipartImages) {

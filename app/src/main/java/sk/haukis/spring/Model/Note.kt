@@ -44,7 +44,7 @@ class Note {
                     + "/Android/data/"
                     + "sk.haukis.spring"
                     + "/Files/"
-                    + id).listFiles()
+                    + id +"/Images").listFiles()
             if (mediaStorageDir != null && mediaStorageDir.isNotEmpty()) {
                 mediaStorageDir.mapTo(images) { it.absolutePath }
                 return mediaStorageDir[0].absolutePath
