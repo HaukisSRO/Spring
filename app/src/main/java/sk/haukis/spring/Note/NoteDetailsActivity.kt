@@ -6,6 +6,7 @@ import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.transition.Transition
 import android.view.MenuItem
+import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -15,7 +16,12 @@ import kotlinx.android.synthetic.main.activity_note_details.*
 import kotlinx.android.synthetic.main.content_note_details.*
 import sk.haukis.spring.API.DB
 import sk.haukis.spring.Models.Note
+import sk.haukis.spring.commons.GalleryFragment
 import sk.haukis.spring.commons.SchemeParameter
+import android.view.ViewAnimationUtils
+import android.animation.Animator
+
+
 
 class NoteDetailsActivity : AppCompatActivity() {
 
@@ -57,6 +63,16 @@ class NoteDetailsActivity : AppCompatActivity() {
                 override fun onTransitionStart(p0: Transition?) {}
             })
         }
+
+        gallery_fab.setOnClickListener {
+            val galleryFragment = GalleryFragment().newInstance(note.images)
+            supportFragmentManager.beginTransaction()
+                    .add(R.id.gallery_wrapper, galleryFragment)
+                    .addToBackStack("gallery")
+                    .commit()
+
+            reveal(gallery_wrapper, false)
+        }
     }
 
     fun setUpLayout(){
@@ -87,11 +103,16 @@ class NoteDetailsActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        gallery_fab.animate()
-                .scaleX(0F).scaleY(0F)
-                .withEndAction({
-                    supportFinishAfterTransition()
-                })
+        if (supportFragmentManager.backStackEntryCount > 0) {
+            reveal(gallery_wrapper, true)
+        }
+        else {
+            gallery_fab.animate()
+                    .scaleX(0F).scaleY(0F)
+                    .withEndAction({
+                        supportFinishAfterTransition()
+                    })
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -106,6 +127,46 @@ class NoteDetailsActivity : AppCompatActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+
+    fun reveal(view : View, hide : Boolean){
+
+        val centerX = (gallery_fab.left + gallery_fab.right) / 2
+        val centerY = (gallery_fab.top + gallery_fab.bottom) / 2
+
+        if (hide){
+            val endRadius = 0F
+            val startRadius = Math.max(view.width, view.height).toFloat()
+
+            val anim = ViewAnimationUtils.createCircularReveal(view, centerX, centerY, startRadius, endRadius)
+            anim.duration = 500
+            anim.addListener(object : Animator.AnimatorListener {
+                override fun onAnimationRepeat(p0: Animator?) {}
+                override fun onAnimationCancel(p0: Animator?) {}
+                override fun onAnimationStart(p0: Animator?) {}
+                override fun onAnimationEnd(p0: Animator?) {
+                    gallery_fab.animate().scaleX(1F).scaleY(1F)
+                    view.visibility = View.INVISIBLE
+                    supportFragmentManager.popBackStackImmediate()
+                }
+            })
+            anim.start()
+        }
+
+        else {
+
+            gallery_fab.animate().scaleX(0F).scaleY(0F).withEndAction {
+                val startRadius = 0
+                val endRadius = Math.max(view.width, view.height)
+
+                val anim = ViewAnimationUtils.createCircularReveal(view, centerX, centerY, startRadius.toFloat(), endRadius.toFloat())
+
+                view.visibility = View.VISIBLE
+                anim.duration = 500
+                anim.start()
+            }
+        }
     }
 
 }

@@ -11,6 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="250dp"
         android:fitsSystemWindows="true"
+        android:background="@drawable/background_blue"
         android:theme="@style/AppTheme.AppBarOverlay">
 
         <android.support.design.widget.CollapsingToolbarLayout
@@ -19,8 +20,6 @@
             android:layout_height="match_parent"
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
             android:fitsSystemWindows="true"
-            app:contentScrim="@color/colorPrimary"
-            app:statusBarScrim="@color/colorPrimary"
             app:collapsedTitleGravity="left"
             app:expandedTitleMarginStart="16dp"
             app:expandedTitleMarginEnd="64dp">
@@ -42,7 +41,6 @@
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                android:background="#0FFF"
                 app:layout_collapseMode="pin"
                 app:expandedTitleTextAppearance="@style/TextAppearance.AppCompat.Small" />
 
@@ -60,6 +58,13 @@
         <include layout="@layout/content_note_details" />
 
     </android.support.v4.widget.NestedScrollView>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/gallery_wrapper"
+        android:fitsSystemWindows="true"
+        android:visibility="invisible"/>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/gallery_fab"
