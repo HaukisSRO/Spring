@@ -1,8 +1,14 @@
 package sk.haukis.spring.Models
 
 import android.os.Environment
+import android.util.Log
+import co.metalab.asyncawait.async
 import ninja.sakib.pultusorm.annotations.Ignore
 import ninja.sakib.pultusorm.annotations.PrimaryKey
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import sk.haukis.spring.API.SpringApi
 import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
@@ -21,6 +27,8 @@ class Note {
     var edited: String? = null
     var editedBy: String = ""
     var templateId: Int = 0
+    var color : String = ""
+    var isPublic : Boolean = false
 
     @Ignore
     var images : java.util.ArrayList<String> = java.util.ArrayList()

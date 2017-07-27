@@ -1,5 +1,6 @@
 package sk.haukis.spring.Note
 
+import android.graphics.Color
 import android.net.Uri
 import android.support.design.widget.TabLayout
 import android.support.v7.app.AppCompatActivity
@@ -9,11 +10,13 @@ import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
 import android.os.Bundle
+import android.support.v4.app.FragmentStatePagerAdapter
 import android.transition.*
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.WindowManager
 import co.metalab.asyncawait.async
 import kotlinx.android.synthetic.main.activity_note_create.*
 import okhttp3.ResponseBody
@@ -34,6 +37,7 @@ class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTempl
     val templateChooser : NoteSchemeChooseFragment = NoteSchemeChooseFragment()
     val noteMedia : NoteMediaFragment = NoteMediaFragment()
     val noteCreate : NoteCreateFragment = NoteCreateFragment()
+    val noteSpecs : NoteSpecsFragment = NoteSpecsFragment()
     val camera : CameraFragment = CameraFragment()
     var NoteId = UUID.randomUUID().toString()
     val images : ArrayList<Uri> = ArrayList()
@@ -56,6 +60,7 @@ class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTempl
         tabs.visibility = View.VISIBLE
         container.visibility = View.VISIBLE
         toolbar.visibility = View.VISIBLE
+        save_note.visibility = View.VISIBLE
         noteCreate.Init(id)
         this.removeFragment(templateChooser)
     }
@@ -92,6 +97,7 @@ class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTempl
 
         tabs.visibility = View.GONE
         container.visibility = View.INVISIBLE
+        save_note.visibility = View.GONE
 
         mSectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager)
 
@@ -100,8 +106,10 @@ class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTempl
         noteMedia.arguments = bundle
         mSectionsPagerAdapter.addPage(noteCreate, "Template")
         mSectionsPagerAdapter.addPage(noteMedia, "Media")
+        mSectionsPagerAdapter.addPage(noteSpecs, "Specs")
 
         // Set up the ViewPager with the sections adapter.
+        container.offscreenPageLimit = 3
         container!!.adapter = mSectionsPagerAdapter
 
         tabs.setupWithViewPager(container, true)
@@ -119,6 +127,7 @@ class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTempl
     fun saveNote(){
         val note = noteCreate.getNote()
         note.id = NoteId
+        note.isPublic = noteSpecs.isPublic()
         async {
             val noteSaveCall = springApi.createNote(note)
             noteSaveCall.enqueue(object : Callback<Note> {
@@ -153,20 +162,28 @@ class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTempl
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        val id = item.itemId
-
-
-        if (id == R.id.action_settings) {
-            return true
+        when (item.itemId) {
+            R.id.action_settings -> {
+                return true
+            }
+            android.R.id.home -> {
+                finishActivity()
+                return true
+            }
         }
 
         return super.onOptionsItemSelected(item)
     }
 
-    inner class SectionsPagerAdapter(fm: FragmentManager) : FragmentPagerAdapter(fm) {
+    override fun onBackPressed() {
+        finishActivity()
+    }
+
+    fun finishActivity(){
+        finishAfterTransition()
+    }
+
+    inner class SectionsPagerAdapter(fm: FragmentManager) : FragmentStatePagerAdapter(fm) {
 
         val fragmentList : ArrayList<Fragment> = ArrayList()
         val titleList : ArrayList<String> = ArrayList()

@@ -11,6 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="250dp"
         android:fitsSystemWindows="true"
+        android:transitionName="app_bar_layout"
         android:background="@drawable/background_blue"
         android:theme="@style/AppTheme.AppBarOverlay">
 
@@ -21,6 +22,7 @@
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
             android:fitsSystemWindows="true"
             app:collapsedTitleGravity="left"
+            app:contentScrim="@color/colorPrimary"
             app:expandedTitleMarginStart="16dp"
             app:expandedTitleMarginEnd="64dp">
 
@@ -34,6 +36,7 @@
                 android:fitsSystemWindows="true"
                 app:layout_scrollFlags="scroll|enterAlways|enterAlwaysCollapsed"
                 app:layout_collapseMode="parallax"
+                android:visibility="invisible"
                 android:contentDescription="@string/title_image_desc"
                 android:src="@drawable/landscape"/>
 
@@ -53,6 +56,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
+        android:background="@color/activity_white"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <include layout="@layout/content_note_details" />

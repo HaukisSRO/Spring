@@ -20,14 +20,14 @@ import sk.haukis.spring.commons.inflate
  * Created by danie_000 on 4.7.2017.
  */
 
-class NotesAdapter(val notes: ArrayList<Note>, val longClickListener: (Note, Int) -> Unit) : RecyclerView.Adapter<NotesAdapter.ViewHolder>(){
+class NotesAdapter(val activity: Activity, val notes: ArrayList<Note>, val longClickListener: (Note, Int) -> Unit) : RecyclerView.Adapter<NotesAdapter.ViewHolder>(){
 
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) = holder.bind(notes[position], longClickListener)
 
     override fun getItemCount(): Int = notes.size
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder = ViewHolder(parent.inflate(R.layout.note_item))
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder = ViewHolder(activity, parent.inflate(R.layout.note_item))
 
     fun AddNote(note : Note){
         notes.add(note)
@@ -47,7 +47,7 @@ class NotesAdapter(val notes: ArrayList<Note>, val longClickListener: (Note, Int
         notifyDataSetChanged()
     }
 
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView){
+    class ViewHolder(val activity: Activity, itemView: View) : RecyclerView.ViewHolder(itemView){
 
         fun bind(item: Note, listener: (Note, Int) -> Unit) = with(itemView) {
             note_text.text = item.name
@@ -57,13 +57,14 @@ class NotesAdapter(val notes: ArrayList<Note>, val longClickListener: (Note, Int
 
             setOnClickListener {
                 val p1: android.util.Pair<View, String> = android.util.Pair.create(itemView.note_image, "titleImage")
+                val p2: android.util.Pair<View, String> = android.util.Pair.create(activity.findViewById(R.id.app_bar_layout), "app_bar_layout")
                 //var options: ActivityOptionsCompat = ActivityOptionsCompat.
                 //        makeSceneTransitionAnimation(context as Activity, p1)
 
                 val intent = Intent(context, NoteDetailsActivity::class.java)
                 intent.putExtra("note_id", item.id)
                 Log.e("Itemid", item.id)
-                context.startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(context as Activity, p1).toBundle())
+                context.startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(context as Activity, p2).toBundle())
             }
 
             setOnLongClickListener {

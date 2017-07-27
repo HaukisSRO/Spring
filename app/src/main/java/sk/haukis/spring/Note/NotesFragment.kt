@@ -2,6 +2,7 @@ package sk.haukis.spring.Note
 
 import android.content.Context
 import android.os.Bundle
+import android.support.design.widget.Snackbar
 import android.support.v4.app.Fragment
 import android.view.ActionMode
 import android.support.v7.widget.GridLayoutManager
@@ -28,6 +29,9 @@ import sk.haukis.spring.commons.PropagatingTransition
  */
 class NotesFragment : Fragment() {
 
+    val MODE_PRIVATE = 1
+    val MODE_PUBLIC = 2
+
     var mActionMode: ActionMode? = null
     lateinit var springApi : SpringApi
     lateinit var allNotes: ArrayList<Note>
@@ -36,6 +40,19 @@ class NotesFragment : Fragment() {
     var selectedNote: String = ""
     var selectedViewPosition: Int = 0
     val db : DB = DB()
+    var mode : Int = 1
+
+
+
+    fun newInstance(mode: Int) : NotesFragment{
+        val bundle = Bundle()
+        bundle.putInt("mode", mode)
+
+        val imageFragment = NotesFragment()
+        imageFragment.arguments = bundle
+        return imageFragment
+    }
+
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
@@ -43,7 +60,7 @@ class NotesFragment : Fragment() {
         springApi = SpringApi(activity)
         val view = inflater?.inflate(R.layout.fragment_notes, container, false)
         db.Init(context)
-
+        mode = arguments.getInt("mode")
         return view
     }
 
@@ -55,7 +72,7 @@ class NotesFragment : Fragment() {
 
         allNotes = db.GetAllNotes()
         LoadListener?.OnLoad()
-        notesAdapter = NotesAdapter(allNotes) { note: Note, position: Int ->
+        notesAdapter = NotesAdapter(activity, allNotes) { note: Note, position: Int ->
             Log.e("Long", "Click")
             mActionMode = activity.startActionMode(mActionModeCallback)
             selectedNote = note.id
@@ -84,35 +101,52 @@ class NotesFragment : Fragment() {
 
     fun RefreshList(){
         async {
-            val notesCall = springApi.getAllNotes()
-            notesCall.enqueue(object : Callback<ArrayList<Note>> {
-                override fun onResponse(call: Call<ArrayList<Note>>, response: Response<ArrayList<Note>>) {
-                    val allNotes1 = response.body()!!
+            if (mode == MODE_PRIVATE) {
+                val notesCall = springApi.getAllNotes()
+                notesCall.enqueue(object : Callback<ArrayList<Note>> {
+                    override fun onResponse(call: Call<ArrayList<Note>>, response: Response<ArrayList<Note>>) {
+                        allNotes = response.body()!!
+                        setUp()
+                    }
 
-                    allNotes = allNotes1
-                    notesAdapter.Update(allNotes)
+                    override fun onFailure(call: Call<ArrayList<Note>>?, t: Throwable?) {
+                        Log.e("TAG1", t?.message)
+                    }
 
-                    db.SaveAllNotes(allNotes)
+                })
+            }
+            else if (mode == MODE_PUBLIC){
+                val notesCall = springApi.getPublicNotes()
+                notesCall.enqueue(object : Callback<ArrayList<Note>> {
+                    override fun onResponse(call: Call<ArrayList<Note>>, response: Response<ArrayList<Note>>) {
+                        allNotes = response.body()!!
+                        setUp()
+                    }
 
-                    notesAdapter.notifyDataSetChanged()
-                    swipe_refresh_layout.isRefreshing = false
-                    PropagatingTransition(sceneRoot = notes_list,
-                            startingView = notes_list.getChildAt(0),
-                            transition = TransitionSet()
-                                    .addTransition(Fade(Fade.IN)
-                                            .setInterpolator { (it - 0.5f) * 2 })
-                                    .addTransition(Explode())
-                    )
-                            .start()
-                }
+                    override fun onFailure(call: Call<ArrayList<Note>>?, t: Throwable?) {
+                        Log.e("TAG1", t?.message)
+                    }
+                })
+            }
 
-                override fun onFailure(call: Call<ArrayList<Note>>?, t: Throwable?) {
-                    Log.e("TAG1", t?.message)
-                    swipe_refresh_layout.isRefreshing = false
-                }
-
-            })
         }
+    }
+
+    fun setUp(){
+        notesAdapter.Update(allNotes)
+
+        if (mode == MODE_PRIVATE)
+            db.SaveAllNotes(allNotes)
+
+        notesAdapter.notifyDataSetChanged()
+        swipe_refresh_layout.isRefreshing = false
+        PropagatingTransition(sceneRoot = notes_list,
+                startingView = notes_list.layoutManager.findViewByPosition(0),
+                transition = TransitionSet()
+                        .addTransition(Fade(Fade.IN)
+                                .setInterpolator { (it - 0.5f) * 2 })
+                        .addTransition(Slide(Gravity.BOTTOM))
+        ).start()
     }
 
     override fun onAttach(context: Context?) {
@@ -173,6 +207,8 @@ class NotesFragment : Fragment() {
     }
 
     fun deleteNote(id: String, position: Int){
+        Snackbar.make(activity.findViewById(R.id.coordinator), getString(R.string.delete_note), Snackbar.LENGTH_LONG).show()
+
         val deleteCall = springApi.deleteNote(id)
         deleteCall.enqueue(object: Callback<Note>{
             override fun onResponse(call: Call<Note>?, response: Response<Note>) {

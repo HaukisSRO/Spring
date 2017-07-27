@@ -24,6 +24,9 @@ interface Api {
     @POST("notes")
     fun createNote(@Body note: Note): Call<Note>
 
+    @GET("notes/public")
+    fun getPublicNotes(): Call<ArrayList<Note>>
+
     @Multipart
     @POST("notes/{id}/images")
     fun addImages(@Path("id") id : String,
@@ -46,5 +49,9 @@ interface Api {
     @FormUrlEncoded
     @POST("AccountApi/token")
     fun getAccessToken(@Field("email") email: String, @Field("password") password: String): Call<AccessToken>
+
+    @FormUrlEncoded
+    @POST("AccountApi")
+    fun registerUser(@Field("email") email: String, @Field("password") password: String): Call<ResponseBody>
 
 }

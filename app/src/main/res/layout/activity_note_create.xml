@@ -9,12 +9,13 @@
     tools:context="sk.haukis.spring.Note.NoteCreateActivity">
 
     <android.support.design.widget.AppBarLayout
-        android:id="@+id/appbar"
+        android:id="@+id/app_bar_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/background_blue"
         android:paddingTop="@dimen/statusBarPadding"
         android:fitsSystemWindows="true"
+        android:transitionName="app_bar_layout"
         android:theme="@style/AppTheme.AppBarOverlay">
 
         <android.support.v7.widget.Toolbar
@@ -31,19 +32,16 @@
             android:id="@+id/tabs"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
+
     </android.support.design.widget.AppBarLayout>
 
     <android.support.v4.view.ViewPager
         android:id="@+id/container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_anchor="@id/appbar"
+        app:layout_anchor="@id/app_bar_layout"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/main_container"/>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/save_note"
@@ -53,5 +51,10 @@
         android:layout_margin="16dp"
         android:transitionName="sharedFab"
         android:src="@drawable/ic_save"/>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/main_container"/>
 
 </android.support.design.widget.CoordinatorLayout>

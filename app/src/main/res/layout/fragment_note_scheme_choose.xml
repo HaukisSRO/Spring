@@ -2,8 +2,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#fff"
-    android:layout_marginTop="?attr/actionBarSize"
+    android:background="#FAFAFA"
+    android:paddingTop="?attr/actionBarSize"
     tools:context="sk.haukis.spring.Note.NoteSchemeChooseFragment">
 
     <android.support.v7.widget.RecyclerView

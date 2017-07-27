@@ -62,8 +62,16 @@ class SpringApi constructor(activity : Activity? = null) {
         return api.getAccessToken(email, password)
     }
 
+    fun registerUser (email: String, password: String) : Call<ResponseBody> {
+        return api.registerUser(email, password)
+    }
+
     fun getAllNotes () : Call<ArrayList<Note>> {
         return api.allNotes()
+    }
+
+    fun getPublicNotes () : Call<ArrayList<Note>> {
+        return api.getPublicNotes()
     }
 
     fun getNote (id : String) : Call<Note> {

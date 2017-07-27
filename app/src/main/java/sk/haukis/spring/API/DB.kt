@@ -25,7 +25,7 @@ class DB {
     }
 
     fun Delete(entity : Any){
-        var id : Any
+        val id : Any
         if (entity is Note)
             id = entity.id
         else if (entity is Template)
@@ -51,12 +51,16 @@ class DB {
         return pultusOrm.find(Note()) as ArrayList<Note>
     }
 
-    fun GetNote(id: String) : Note {
+    fun GetNote(id: String) : Note? {
         val condition: PultusORMCondition = PultusORMCondition.Builder()
                 .eq("id", id)
                 .build()
-
-        return pultusOrm.find(Note(), condition)[0] as Note
+        try {
+            return pultusOrm.find(Note(), condition)[0] as Note
+        }
+        catch (e: Exception){
+            return null
+        }
     }
 
 

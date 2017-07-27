@@ -43,11 +43,17 @@ class TemplateCreateActivity : AppCompatActivity() {
 
     fun AddParam(){
         val param = EditText(this)
+        val paramHolder = android.support.design.widget.TextInputLayout(this)
+
         val p = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         param.layoutParams = p
+        paramHolder.layoutParams = p
         param.id = parameterCount.size
+        param.hint = "Parameter ${parameterCount.size +1}"
+
         parameterCount.add(param)
-        param_layout.addView(param)
+        paramHolder.addView(param)
+        param_layout.addView(paramHolder)
         param.requestFocus()
     }
 

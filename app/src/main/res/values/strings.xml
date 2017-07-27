@@ -29,4 +29,11 @@
     <string name="section_format">Hello World from section: %1$d</string>
     <string name="title_image_desc">title image</string>
     <string name="new_note">New note</string>
+    <string name="delete_note">Note removed</string>
+    <string name="back">Back</string>
+    <string name="is_public">Public</string>
+    <string name="bad_login">Bad username or password</string>
+    <string name="password_confirm">Password confirm</string>
+    <string name="pass_match">Password doesn\'t match</string>
+    <string name="create_user">Register</string>
 </resources>
