@@ -9,6 +9,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import sk.haukis.spring.API.SpringApi
+import sk.haukis.spring.Model.NoteImage
 import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
@@ -29,6 +30,9 @@ class Note {
     var templateId: Int = 0
     var color : String = ""
     var isPublic : Boolean = false
+
+    @Ignore
+    var onlineImages : ArrayList<NoteImage> = ArrayList()
 
     @Ignore
     var images : java.util.ArrayList<String> = java.util.ArrayList()

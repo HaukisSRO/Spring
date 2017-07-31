@@ -24,13 +24,19 @@ interface Api {
     @POST("notes")
     fun createNote(@Body note: Note): Call<Note>
 
-    @GET("notes/public")
-    fun getPublicNotes(): Call<ArrayList<Note>>
+    @GET("notes/public/{page}")
+    fun getPublicNotes(@Path("page") page: Int = 0): Call<ArrayList<Note>>
 
     @Multipart
     @POST("notes/{id}/images")
     fun addImages(@Path("id") id : String,
                   @Part images:  ArrayList<MultipartBody.Part>) : Call<ResponseBody>
+
+    @Multipart
+    @POST("images")
+    fun uploadImage(@Part noteId: MultipartBody.Part,
+                    @Part image: MultipartBody.Part,
+                    @Part desc: MultipartBody.Part) : Call<ResponseBody>
 
     @DELETE("notes/{id}")
     fun deleteNote(@Path("id") id: String): Call<Note>
@@ -47,11 +53,11 @@ interface Api {
 
     //User
     @FormUrlEncoded
-    @POST("AccountApi/token")
+    @POST("Account/token")
     fun getAccessToken(@Field("email") email: String, @Field("password") password: String): Call<AccessToken>
 
     @FormUrlEncoded
-    @POST("AccountApi")
+    @POST("Account")
     fun registerUser(@Field("email") email: String, @Field("password") password: String): Call<ResponseBody>
 
 }

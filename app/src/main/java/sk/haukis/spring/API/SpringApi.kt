@@ -12,6 +12,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import sk.haukis.spring.Models.AccessToken
 import sk.haukis.spring.Models.Note
 import okhttp3.logging.HttpLoggingInterceptor
+import sk.haukis.spring.Model.NoteImage
 import sk.haukis.spring.Models.Template
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -94,6 +95,14 @@ class SpringApi constructor(activity : Activity? = null) {
         }
 
         return api.addImages(noteId, multipartImages)
+    }
+
+    fun uploadImages(image: NoteImage) : Call<ResponseBody> {
+        val file : RequestBody = RequestBody.create(MediaType.parse("image/*"), image.image)
+        val imagePart = MultipartBody.Part.createFormData("image", image.image?.name, file)
+        val descPart = MultipartBody.Part.createFormData("desc", image.desc)
+        val noteIdPart = MultipartBody.Part.createFormData("noteId", image.noteId)
+        return api.uploadImage(noteIdPart, imagePart, descPart)
     }
 
     fun deleteNote (id: String): Call<Note>{

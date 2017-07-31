@@ -24,10 +24,12 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import sk.haukis.spring.API.SpringApi
+import sk.haukis.spring.Model.NoteImage
 import sk.haukis.spring.Models.Note
 import sk.haukis.spring.R
 import sk.haukis.spring.commons.CameraFragment
 import sk.haukis.spring.commons.removeFragment
+import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -40,11 +42,15 @@ class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTempl
     val noteSpecs : NoteSpecsFragment = NoteSpecsFragment()
     val camera : CameraFragment = CameraFragment()
     var NoteId = UUID.randomUUID().toString()
-    val images : ArrayList<Uri> = ArrayList()
+    val images : ArrayList<NoteImage> = ArrayList()
     lateinit var springApi : SpringApi
 
     override fun onPhotoCreated(uri: Uri) {
-        images.add(uri)
+        var noteImage = NoteImage()
+        noteImage.image = File(uri.toString())
+        noteImage.noteId = NoteId
+        noteImage.desc = "obrázok $uri"
+        images.add(noteImage)
         noteMedia.addImage(uri)
 
         tabs.visibility = View.VISIBLE
@@ -140,18 +146,20 @@ class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTempl
             })
         }
         async {
-            val gallerySaveCall = springApi.addImages(NoteId, images)
-            gallerySaveCall.enqueue(object : Callback<ResponseBody>{
-                override fun onResponse(call: Call<ResponseBody>?, response: Response<ResponseBody>?) {
-                    Log.e("Photos", "saved")
-                }
+            images
+                    .map { springApi.uploadImages(it) }
+                    .forEach {
+                        it.enqueue(object : Callback<ResponseBody> {
+                            override fun onResponse(call: Call<ResponseBody>?, response: Response<ResponseBody>?) {
+                                Log.e("Photos", "saved")
+                            }
 
-                override fun onFailure(call: Call<ResponseBody>?, t: Throwable?) {
-                }
+                            override fun onFailure(call: Call<ResponseBody>?, t: Throwable?) {
+                            }
 
-            })
+                        })
+                    }
         }
-
         finishAfterTransition()
     }
 

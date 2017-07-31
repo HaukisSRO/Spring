@@ -54,6 +54,7 @@ class NoteDetailsActivity : AppCompatActivity() {
                 override fun onResponse(call: Call<Note>?, response: Response<Note>?) {
                     note = response?.body()
                     setUpLayout()
+                    onlineNote = true
                 }
 
                 override fun onFailure(call: Call<Note>?, t: Throwable?) {
