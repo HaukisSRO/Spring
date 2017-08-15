@@ -24,8 +24,8 @@ class Note {
     var name: String = ""
     var owner: String = ""
     var text: String = ""
-    var created: String? = null
-    var edited: String? = null
+    var created: String = "1.1.1995"
+    var edited: String = "1.1.1995"
     var editedBy: String = ""
     var templateId: Int = 0
     var color : String = ""
@@ -63,4 +63,17 @@ class Note {
             }
             return ""
         }
+
+
+    fun Create(springApi: SpringApi){
+        val noteSaveCall = springApi.createNote(this)
+        noteSaveCall.enqueue(object : Callback<Note> {
+            override fun onFailure(call: Call<Note>?, t: Throwable?) {
+            }
+
+            override fun onResponse(call: Call<Note>?, response: Response<Note>?) {
+                Log.e("NoteCreate", "Saved $name")
+            }
+        })
+    }
 }

@@ -3,6 +3,7 @@ package sk.haukis.spring.Note
 
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.text.Editable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -31,26 +32,39 @@ class NoteCreateFragment : Fragment() {
         return inflater!!.inflate(R.layout.fragment_note_create, container, false)
     }
 
-    fun Init(templateId: Int){
-        db.Init(context)
-        schemeId = templateId
-        val template = db.GetTemplate(templateId)
-        scheme = SchemeParameter().parse(template.scheme!!)
-        setUpParams()
+    fun Init(templateId: Int, note : Note? = null){
+        if (note == null) {
+            db.Init(context)
+            schemeId = templateId
+            val template = db.GetTemplate(templateId)
+            scheme = SchemeParameter().parse(template.scheme!!)
+            setUpParams()
+        }
+        else {
+            scheme = SchemeParameter().parse(note.text)
+            note_name.setText(note.name)
+            setUpParams(true)
+        }
     }
 
-    fun setUpParams(){
+    fun setUpParams(b : Boolean = false){
         for (param in scheme){
             val et = EditText(context)
             et.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            et.hint = param.text
+            if (b) {
+                et.hint = param.title
+                et.setText(param.text)
+            }
+            else {
+                et.hint = param.text
+            }
             et.id = param.id
             param_wrapper.addView(et)
         }
     }
 
     fun getNote() : Note {
-        val note = Note()
+        val note : Note = Note()
         note.templateId = schemeId
         val noteScheme = ArrayList<SchemeParameter>()
 
@@ -58,7 +72,7 @@ class NoteCreateFragment : Fragment() {
 
         scheme
                 .map { view?.findViewById(it.id) as EditText }
-                .mapTo(noteScheme) { SchemeParameter(it.id, it.text.toString()) }
+                .mapTo(noteScheme) { SchemeParameter(it.id, it.hint.toString(), it.text.toString()) }
 
         note.text = Gson().toJson(noteScheme)
 

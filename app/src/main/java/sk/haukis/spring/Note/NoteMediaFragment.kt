@@ -49,9 +49,11 @@ class NoteMediaFragment : Fragment() {
 
     fun addImage(filePath: Uri){
         val imageView : ImageView = ImageView(context)
-        val p = LinearLayout.LayoutParams(300, 300)
-        imageView.layoutParams = p
+        val p = LinearLayout.LayoutParams(500 , LinearLayout.LayoutParams.MATCH_PARENT)
         imageView.setImageURI(filePath)
+        imageView.layoutParams = p
+        imageView.setPadding(0, 0, 15, 0)
+        imageView.scaleType = ImageView.ScaleType.CENTER_CROP
         photos_wrapper.addView(imageView)
     }
 

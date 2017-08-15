@@ -4,6 +4,7 @@ import android.content.Context
 import ninja.sakib.pultusorm.callbacks.Callback
 import ninja.sakib.pultusorm.core.PultusORM
 import ninja.sakib.pultusorm.core.PultusORMCondition
+import sk.haukis.spring.Model.OfflineNote
 import sk.haukis.spring.Models.Note
 import sk.haukis.spring.Models.Template
 
@@ -49,6 +50,22 @@ class DB {
 
     fun GetAllNotes(): ArrayList<Note>{
         return pultusOrm.find(Note()) as ArrayList<Note>
+    }
+
+    fun GetAllOfflineNotes() : ArrayList<OfflineNote> {
+        val offlineNotes = pultusOrm.find(OfflineNote()) as ArrayList<OfflineNote>
+        offlineNotes.forEach({
+            if (it.action == 0 || it.action == 1){
+                val allNotes = pultusOrm.find(Note())
+                if (GetNote(it.noteId) != null)
+                    it.note = GetNote(it.noteId)!!
+            }
+        })
+        return offlineNotes
+    }
+
+    fun IsOfflineNote() : Boolean {
+        return pultusOrm.find(OfflineNote()).size > 0
     }
 
     fun GetNote(id: String) : Note? {

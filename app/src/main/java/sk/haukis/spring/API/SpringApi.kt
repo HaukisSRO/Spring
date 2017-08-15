@@ -3,6 +3,7 @@ package sk.haukis.spring.API
 import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
+import android.net.ConnectivityManager
 import android.net.Uri
 import android.util.Log
 import okhttp3.*
@@ -13,6 +14,7 @@ import sk.haukis.spring.Models.AccessToken
 import sk.haukis.spring.Models.Note
 import okhttp3.logging.HttpLoggingInterceptor
 import sk.haukis.spring.Model.NoteImage
+import sk.haukis.spring.Model.OfflineNote
 import sk.haukis.spring.Models.Template
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -21,7 +23,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Created by danie_000 on 4.7.2017.
  */
-class SpringApi constructor(activity : Activity? = null) {
+class SpringApi constructor(val activity : Activity? = null) {
 
     val api : Api
 
@@ -84,6 +86,14 @@ class SpringApi constructor(activity : Activity? = null) {
         return a
     }
 
+    fun editNote(noteId: String, note: Note) : Call<Note> {
+        return api.editNote(noteId, note)
+    }
+
+    fun syncNotes(offlineNotes: ArrayList<OfflineNote>) : Call<ResponseBody>{
+        return api.syncNotes(offlineNotes)
+    }
+
     fun addImages(noteId : String, images : ArrayList<Uri>) : Call<ResponseBody> {
         val files : ArrayList<File> = ArrayList()
         images.mapTo(files) { File(it.toString()) }
@@ -116,7 +126,19 @@ class SpringApi constructor(activity : Activity? = null) {
     fun createTemplate(template: Template): Call<Template> {
         return  api.createTemplate(template)
     }
+
+    fun deleteTemplate(id: String) : Call<Template> {
+        return api.deleteTemplate(id)
+    }
+
+
+    fun isOnline(): Boolean {
+        val cm = activity?.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val netInfo = cm.activeNetworkInfo
+        return netInfo != null && netInfo.isConnected
+    }
 }
+
 
 class AuthenticationInterceptor(private val accessToken: String) : Interceptor {
 

@@ -1,6 +1,7 @@
 package sk.haukis.spring.Note
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v4.app.Fragment
@@ -14,14 +15,17 @@ import android.util.Log
 import android.view.*
 import co.metalab.asyncawait.async
 import kotlinx.android.synthetic.main.fragment_notes.*
+import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import sk.haukis.spring.API.DB
 import sk.haukis.spring.API.SpringApi
+import sk.haukis.spring.Model.OfflineNote
 import sk.haukis.spring.Models.Note
 import sk.haukis.spring.R
 import sk.haukis.spring.commons.PropagatingTransition
+import java.util.*
 
 
 /**
@@ -94,39 +98,68 @@ class NotesFragment : Fragment() {
         itemTouchHelper.attachToRecyclerView(notes_list)
 
         swipe_refresh_layout.setOnRefreshListener {
-
             RefreshList()
         }
     }
 
-    fun RefreshList(){
-        async {
-            if (mode == MODE_PRIVATE) {
-                val notesCall = springApi.getAllNotes()
-                notesCall.enqueue(object : Callback<ArrayList<Note>> {
-                    override fun onResponse(call: Call<ArrayList<Note>>, response: Response<ArrayList<Note>>) {
-                        allNotes = response.body()!!
-                        setUp()
+    fun Sync() {
+        val offlineNotes = db.GetAllOfflineNotes()
+        if (springApi.isOnline()){
+            if (offlineNotes.size > 0) {
+                val syncCall = springApi.syncNotes(offlineNotes)
+                syncCall.enqueue(object : Callback<ResponseBody>{
+                    override fun onResponse(call: Call<ResponseBody>?, response: Response<ResponseBody>?) {
+                        Log.e("TAG", "synced")
+                        db.pultusOrm.drop(OfflineNote())
+                        RefreshList()
                     }
 
-                    override fun onFailure(call: Call<ArrayList<Note>>?, t: Throwable?) {
-                        Log.e("TAG1", t?.message)
+                    override fun onFailure(call: Call<ResponseBody>?, t: Throwable?) {
+                        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
                     }
 
                 })
             }
-            else if (mode == MODE_PUBLIC){
-                val notesCall = springApi.getPublicNotes()
-                notesCall.enqueue(object : Callback<ArrayList<Note>> {
-                    override fun onResponse(call: Call<ArrayList<Note>>, response: Response<ArrayList<Note>>) {
-                        allNotes = response.body()!!
-                        setUp()
-                    }
+            else {
+                RefreshList()
+            }
+        }
+        swipe_refresh_layout.isRefreshing = false
+    }
 
-                    override fun onFailure(call: Call<ArrayList<Note>>?, t: Throwable?) {
-                        Log.e("TAG1", t?.message)
-                    }
-                })
+    fun RefreshList(){
+        async {
+            if (springApi.isOnline()) {
+                if (mode == MODE_PRIVATE) {
+                    val notesCall = springApi.getAllNotes()
+                    notesCall.enqueue(object : Callback<ArrayList<Note>> {
+                        override fun onResponse(call: Call<ArrayList<Note>>, response: Response<ArrayList<Note>>) {
+                            allNotes = response.body()!!
+                            setUp()
+                        }
+
+                        override fun onFailure(call: Call<ArrayList<Note>>?, t: Throwable?) {
+                            Log.e("TAG1", t?.message)
+                        }
+
+                    })
+                } else if (mode == MODE_PUBLIC) {
+                    val notesCall = springApi.getPublicNotes()
+                    notesCall.enqueue(object : Callback<ArrayList<Note>> {
+                        override fun onResponse(call: Call<ArrayList<Note>>, response: Response<ArrayList<Note>>) {
+                            allNotes = response.body()!!
+                            setUp()
+                        }
+
+                        override fun onFailure(call: Call<ArrayList<Note>>?, t: Throwable?) {
+                            Log.e("TAG1", t?.message)
+                        }
+                    })
+                }
+            }
+            else {
+                allNotes = db.GetAllNotes()
+                setUp()
             }
 
         }
@@ -140,13 +173,6 @@ class NotesFragment : Fragment() {
 
         notesAdapter.notifyDataSetChanged()
         swipe_refresh_layout.isRefreshing = false
-        PropagatingTransition(sceneRoot = notes_list,
-                startingView = notes_list.layoutManager.findViewByPosition(0),
-                transition = TransitionSet()
-                        .addTransition(Fade(Fade.IN)
-                                .setInterpolator { (it - 0.5f) * 2 })
-                        .addTransition(Slide(Gravity.BOTTOM))
-        ).start()
     }
 
     override fun onAttach(context: Context?) {
@@ -163,6 +189,11 @@ class NotesFragment : Fragment() {
 
     interface OnLoadListener {
         fun OnLoad()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        RefreshList()
     }
 
 
@@ -194,6 +225,26 @@ class NotesFragment : Fragment() {
                         mode.finish() // Action picked, so close the CAB
                         return true
                     }
+                    R.id.note_edit -> {
+                        if (selectedNote != ""){
+                            val intent = Intent(context, NoteCreateActivity::class.java)
+                            intent.putExtra("editMode", true)
+                            intent.putExtra("noteId", selectedNote)
+                            startActivity(intent)
+                            mode.finish()
+                        }
+                        return true
+                    }
+                    R.id.note_share -> {
+                        if (selectedNote != ""){
+                            val i = Intent(Intent.ACTION_SEND)
+                            i.type = "text/plain"
+                            i.putExtra(Intent.EXTRA_SUBJECT, "Sharing URL")
+                            i.putExtra(Intent.EXTRA_TEXT, "http://haukis-001-site6.etempurl.com/notes/details/$selectedNote")
+                            startActivity(Intent.createChooser(i, "Share URL"))
+                        }
+                        return true
+                    }
                     else -> return false
                 }
             }
@@ -213,14 +264,18 @@ class NotesFragment : Fragment() {
         deleteCall.enqueue(object: Callback<Note>{
             override fun onResponse(call: Call<Note>?, response: Response<Note>) {
                 Log.e("Deleted", response.body().toString())
-                notesAdapter.removeAt(position)
-                db.Delete(allNotes[position])
-                allNotes.removeAt(position)
             }
 
             override fun onFailure(call: Call<Note>?, t: Throwable?) {
-                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+                val offlineNote = OfflineNote()
+                offlineNote.id = UUID.randomUUID().toString()
+                offlineNote.noteId = id
+                offlineNote.action = offlineNote.DELETE
+                db.Save(offlineNote)
             }
         })
+        notesAdapter.removeAt(position)
+        db.Delete(allNotes[position])
+        allNotes.removeAt(position)
     }
 }

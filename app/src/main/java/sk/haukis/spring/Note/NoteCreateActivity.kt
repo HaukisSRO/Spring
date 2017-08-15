@@ -19,12 +19,15 @@ import android.view.View
 import android.view.WindowManager
 import co.metalab.asyncawait.async
 import kotlinx.android.synthetic.main.activity_note_create.*
+import kotlinx.android.synthetic.main.fragment_notes.*
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import sk.haukis.spring.API.DB
 import sk.haukis.spring.API.SpringApi
 import sk.haukis.spring.Model.NoteImage
+import sk.haukis.spring.Model.OfflineNote
 import sk.haukis.spring.Models.Note
 import sk.haukis.spring.R
 import sk.haukis.spring.commons.CameraFragment
@@ -43,10 +46,13 @@ class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTempl
     val camera : CameraFragment = CameraFragment()
     var NoteId = UUID.randomUUID().toString()
     val images : ArrayList<NoteImage> = ArrayList()
+    var editMode = false
     lateinit var springApi : SpringApi
+    var db : DB = DB()
 
     override fun onPhotoCreated(uri: Uri) {
-        var noteImage = NoteImage()
+        val noteImage = NoteImage()
+
         noteImage.image = File(uri.toString())
         noteImage.noteId = NoteId
         noteImage.desc = "obrázok $uri"
@@ -97,13 +103,10 @@ class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTempl
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
 
-        supportFragmentManager.beginTransaction()
-                .add(R.id.main_container, templateChooser)
-                .commit()
+        db.Init(this)
 
-        tabs.visibility = View.GONE
-        container.visibility = View.INVISIBLE
-        save_note.visibility = View.GONE
+        editMode = intent.getBooleanExtra("editMode", false)
+
 
         mSectionsPagerAdapter = SectionsPagerAdapter(supportFragmentManager)
 
@@ -128,22 +131,59 @@ class NoteCreateActivity : AppCompatActivity(), NoteSchemeChooseFragment.OnTempl
         save_note.setOnClickListener {
             saveNote()
         }
+
+        if (!editMode){
+            supportFragmentManager.beginTransaction()
+                    .add(R.id.main_container, templateChooser)
+                    .commit()
+
+            tabs.visibility = View.GONE
+            container.visibility = View.INVISIBLE
+            save_note.visibility = View.GONE
+        }
+
+        container.post {
+            if (editMode) {
+                NoteId = intent.getStringExtra("noteId")
+                val note = db.GetNote(NoteId)
+                noteCreate.Init(note?.templateId ?: 0, note)
+
+                noteSpecs.Init(note!!)
+            }
+        }
     }
 
     fun saveNote(){
         val note = noteCreate.getNote()
         note.id = NoteId
         note.isPublic = noteSpecs.isPublic()
-        async {
-            val noteSaveCall = springApi.createNote(note)
-            noteSaveCall.enqueue(object : Callback<Note> {
-                override fun onFailure(call: Call<Note>?, t: Throwable?) {
-                }
+        note.color = noteSpecs.pickedColor
+        if (springApi.isOnline()) {
+            async {
+                var noteSaveCall = springApi.createNote(note)
+                if (editMode)
+                    noteSaveCall = springApi.editNote(NoteId, note)
 
-                override fun onResponse(call: Call<Note>?, response: Response<Note>?) {
-                    Log.e("NoteCreate", "Saved ${note.name}")
-                }
-            })
+                noteSaveCall.enqueue(object : Callback<Note> {
+                    override fun onFailure(call: Call<Note>?, t: Throwable?) {
+                    }
+
+                    override fun onResponse(call: Call<Note>?, response: Response<Note>?) {
+                        Log.e("NoteCreate", "Saved ${note.name}")
+                    }
+                })
+            }
+        } else {
+            db.Save(note)
+
+            val offlineNote = OfflineNote()
+            offlineNote.id = UUID.randomUUID().toString()
+            offlineNote.noteId = note.id
+            offlineNote.action = 0
+            if (editMode)
+                offlineNote.action = 1
+
+            db.Save(offlineNote)
         }
         async {
             images

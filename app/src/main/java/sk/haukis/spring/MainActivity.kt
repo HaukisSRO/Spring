@@ -1,19 +1,24 @@
 package sk.haukis.spring
 
+import android.Manifest
 import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.support.design.widget.NavigationView
+import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentPagerAdapter
+import android.support.v4.content.ContextCompat
 import android.util.Pair
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
 import android.transition.TransitionInflater
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -22,11 +27,13 @@ import co.metalab.asyncawait.async
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_main.*
+import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import sk.haukis.spring.API.DB
 import sk.haukis.spring.API.SpringApi
+import sk.haukis.spring.Model.OfflineNote
 import sk.haukis.spring.Models.Template
 import sk.haukis.spring.Note.NoteCreateActivity
 import sk.haukis.spring.Note.NotesFragment
@@ -45,11 +52,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     override fun OnLogin() {
         this.removeFragment(loginFragment)
-        val adapter = SectionsPagerAdapter(supportFragmentManager)
-        adapter.addPage(myNotesFragment, "My")
-        adapter.addPage(publicNotesFragment, "Public")
-        container.adapter = adapter
-        tabs.setupWithViewPager(container)
+        InitView()
         tabs.setOnClickListener {
             Toast.makeText(this, "Click", Toast.LENGTH_LONG).show()
         }
@@ -77,8 +80,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
 
-        myNotesFragment = NotesFragment().newInstance(1)
-        publicNotesFragment = NotesFragment().newInstance(2)
+
+
+        db.Init(this)
+        //db.pultusOrm.drop(OfflineNote())
 
         splashScreen = SplashFragment()
         this.addFragment(splashScreen)
@@ -87,14 +92,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val accessToken = sp.getString("ACCESS_TOKEN", "")
 
         if (accessToken != ""){
-            val adapter = SectionsPagerAdapter(supportFragmentManager)
-            adapter.addPage(myNotesFragment, "My")
-            adapter.addPage(publicNotesFragment, "Public")
-            container.adapter = adapter
-            tabs.setupWithViewPager(container)
-            //supportFragmentManager.beginTransaction()
-            //        .add(R.id.main_container, myNotesFragment)
-            //        .commit()
+            SyncNotes()
         }
 
         else {
@@ -111,7 +109,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(this, p1).toBundle())
         }
 
-        db.Init(this)
         DownloadTemplates()
 
         val explode = TransitionInflater.from(this)
@@ -128,22 +125,80 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     fun DownloadTemplates(){
         val self = this
-        async {
-            val springApi: SpringApi = SpringApi(self)
-            val templateCall = springApi.getTemplates()
-            templateCall.enqueue(object : Callback<ArrayList<Template>> {
+        val springApi: SpringApi = SpringApi(self)
+        if (springApi.isOnline()) {
+            async {
+                val templateCall = springApi.getTemplates()
+                templateCall.enqueue(object : Callback<ArrayList<Template>> {
 
-                override fun onResponse(call: Call<ArrayList<Template>>?, response: Response<ArrayList<Template>>?) {
-                    val templates = response?.body()
+                    override fun onResponse(call: Call<ArrayList<Template>>?, response: Response<ArrayList<Template>>?) {
+                        val templates = response?.body()
 
-                    db.SaveAllTemplates(templates!!)
-                }
+                        db.SaveAllTemplates(templates!!)
+                    }
 
-                override fun onFailure(call: Call<ArrayList<Template>>?, t: Throwable?) {
+                    override fun onFailure(call: Call<ArrayList<Template>>?, t: Throwable?) {
+                        Log.e("S", t?.message)
+                    }
+                })
+            }
+        }
+    }
+
+    fun SyncNotes(){
+        val springApi = SpringApi(this)
+        if (db.IsOfflineNote() && springApi.isOnline()){
+            val offlineNotes = db.GetAllOfflineNotes()
+            //offlineNotes.forEach({
+            //    if (it.action == 0){
+            //        it.note.Create(springApi)
+            //    }
+            //})
+            val syncCall = springApi.syncNotes(offlineNotes)
+            syncCall.enqueue(object: Callback<ResponseBody>{
+                override fun onFailure(call: Call<ResponseBody>?, t: Throwable?) {
                     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
                 }
+
+                override fun onResponse(call: Call<ResponseBody>?, response: Response<ResponseBody>?) {
+                    InitView()
+                    db.pultusOrm.drop(OfflineNote())
+                }
+
             })
         }
+        InitView()
+    }
+
+    fun InitView(){
+        myNotesFragment = NotesFragment().newInstance(1)
+        publicNotesFragment = NotesFragment().newInstance(2)
+        val adapter = SectionsPagerAdapter(supportFragmentManager)
+        adapter.addPage(myNotesFragment, "My")
+        adapter.addPage(publicNotesFragment, "Public")
+        container.adapter = adapter
+        tabs.setupWithViewPager(container)
+        GetPermissions()
+    }
+
+    fun GetPermissions(){
+        val permissionsNeeded = ArrayList<String>()
+        permissionsNeeded.add("android.permission.CAMERA")
+        permissionsNeeded.add("android.permission.RECORD_AUDIO")
+        permissionsNeeded.add("android.permission.WRITE_EXTERNAL_STORAGE")
+
+
+        ActivityCompat.requestPermissions(this,
+                permissionsNeeded.toTypedArray(),
+                1)
+    }
+
+    fun addPermission (permission: String) : Boolean {
+        if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+            if (!ActivityCompat.shouldShowRequestPermissionRationale(this, permission))
+                return false
+        }
+        return true
     }
 
     override fun onBackPressed() {
@@ -202,6 +257,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         return true
     }
 
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    }
 
     inner class SectionsPagerAdapter(fm: FragmentManager) : FragmentPagerAdapter(fm) {
 

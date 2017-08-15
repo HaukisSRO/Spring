@@ -21,9 +21,10 @@ import sk.haukis.spring.R
  */
 class GalleryFragment : Fragment() {
 
-    fun newInstance(images: ArrayList<String>) : GalleryFragment {
+    fun newInstance(images: ArrayList<String>, online : Boolean = false) : GalleryFragment {
         val bundle = Bundle()
         bundle.putStringArrayList("images", images)
+        bundle.putBoolean("online", online)
 
         val imageFragment = GalleryFragment()
         imageFragment.arguments = bundle
@@ -43,16 +44,17 @@ class GalleryFragment : Fragment() {
         val adapter = SectionsPagerAdapter(childFragmentManager)
 
         for (image in arguments.getStringArrayList("images")){
-            adapter.addPage(ImageFragment().newInstance(image))
+            adapter.addPage(ImageFragment().newInstance(image, arguments.getBoolean("online")))
         }
         container.adapter = adapter
     }
 
     class ImageFragment : Fragment(){
 
-        fun newInstance(imageUri: String) : ImageFragment{
+        fun newInstance(imageUri: String, online : Boolean = false) : ImageFragment{
             val bundle = Bundle()
             bundle.putString("image", imageUri)
+            bundle.putBoolean("online", online)
 
             val imageFragment = ImageFragment()
             imageFragment.arguments = bundle
@@ -62,7 +64,10 @@ class GalleryFragment : Fragment() {
         override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
             val image = ImageView(activity)
             image.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-            image.setImageURI(Uri.parse(arguments.getString("image")))
+            if (arguments.getBoolean("online"))
+                image.load("http://haukis-001-site6.etempurl.com/api/images/${arguments.getString("image")}/image")
+            else
+                image.setImageURI(Uri.parse(arguments.getString("image")))
             return image
         }
     }

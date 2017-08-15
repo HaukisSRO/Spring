@@ -20,15 +20,17 @@ import sk.haukis.spring.commons.GalleryFragment
 import sk.haukis.spring.commons.SchemeParameter
 import android.view.ViewAnimationUtils
 import android.animation.Animator
+import android.util.Log
+import com.squareup.picasso.Picasso
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import sk.haukis.spring.API.SpringApi
+import sk.haukis.spring.commons.load
 
 
 class NoteDetailsActivity : AppCompatActivity() {
 
-    lateinit var templateScheme : ArrayList<SchemeParameter>
     lateinit var noteScheme : ArrayList<SchemeParameter>
     var note : Note? = null
     val db = DB()
@@ -52,9 +54,9 @@ class NoteDetailsActivity : AppCompatActivity() {
             val noteCall = springApi.getNote(intent.getStringExtra("note_id"))
             noteCall.enqueue(object : Callback<Note> {
                 override fun onResponse(call: Call<Note>?, response: Response<Note>?) {
+                    onlineNote = true
                     note = response?.body()
                     setUpLayout()
-                    onlineNote = true
                 }
 
                 override fun onFailure(call: Call<Note>?, t: Throwable?) {
@@ -82,9 +84,18 @@ class NoteDetailsActivity : AppCompatActivity() {
                 override fun onTransitionStart(p0: Transition?) {}
             })
         }
+    }
 
+    fun setUpLayout(){
         gallery_fab.setOnClickListener {
-            val galleryFragment = GalleryFragment().newInstance(note?.images!!)
+            var galleryFragment = GalleryFragment().newInstance(note?.images!!)
+            if (onlineNote) {
+                val images = ArrayList<String>()
+                note?.onlineImages?.mapTo(images){
+                    it.id
+                }
+                galleryFragment = GalleryFragment().newInstance(images, true)
+            }
             supportFragmentManager.beginTransaction()
                     .add(R.id.gallery_wrapper, galleryFragment)
                     .addToBackStack("gallery")
@@ -92,20 +103,20 @@ class NoteDetailsActivity : AppCompatActivity() {
 
             reveal(gallery_wrapper, false)
         }
-
-    }
-
-    fun setUpLayout(){
-        title_image.setImageURI(Uri.parse(note?.titleImage))
+        if (onlineNote) {
+            title_image.load("http://haukis-001-site6.etempurl.com/api/notes/${note?.id}/image")
+            Log.e("TAG", "http://haukis-001-site6.etempurl.com/api/note/${note?.id}/image")
+        }
+        else {
+            title_image.setImageURI(Uri.parse(note?.titleImage))
+        }
         toolbar.title = note?.name
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        val template = db.GetTemplate(note!!.templateId)
-        templateScheme = SchemeParameter().parse(template.scheme!!)
         noteScheme = SchemeParameter().parse(note!!.text)
 
-        for (i in 0..templateScheme.size - 1){
-            addTemplateParam(templateScheme[i])
+        for (i in 0..noteScheme.size - 1){
+            addTemplateParam(noteScheme[i])
             addNoteParam(noteScheme[i])
         }
     }
@@ -121,7 +132,7 @@ class NoteDetailsActivity : AppCompatActivity() {
     fun addTemplateParam(param: SchemeParameter){
         val tv = TextView(this)
         tv.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        tv.text = param.text
+        tv.text = param.title
         tv.textScaleX = 0.8F
         param_wrapper.addView(tv)
     }

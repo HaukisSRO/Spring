@@ -7,7 +7,7 @@ import com.google.gson.reflect.TypeToken
  * Created by Daniel on 24. 7. 2017.
  */
 
-class SchemeParameter constructor(var id: Int = 0, var text: String = ""){
+class SchemeParameter constructor(var id: Int = 0, var title: String = "", var text: String = ""){
 
     fun parse(schemeJson: String) : ArrayList<SchemeParameter>{
         val type = object : TypeToken<ArrayList<SchemeParameter>>(){}.type

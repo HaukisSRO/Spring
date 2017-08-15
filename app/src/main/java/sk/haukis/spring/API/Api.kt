@@ -5,6 +5,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.http.*
+import sk.haukis.spring.Model.OfflineNote
 import sk.haukis.spring.Models.AccessToken
 import sk.haukis.spring.Models.Note
 import sk.haukis.spring.Models.Template
@@ -24,6 +25,9 @@ interface Api {
     @POST("notes")
     fun createNote(@Body note: Note): Call<Note>
 
+    @PUT("notes/{id}")
+    fun editNote(@Path("id") noteId : String, @Body note: Note) : Call<Note>
+
     @GET("notes/public/{page}")
     fun getPublicNotes(@Path("page") page: Int = 0): Call<ArrayList<Note>>
 
@@ -41,6 +45,9 @@ interface Api {
     @DELETE("notes/{id}")
     fun deleteNote(@Path("id") id: String): Call<Note>
 
+    @POST("notes/sync")
+    fun syncNotes(@Body offlineNotes: ArrayList<OfflineNote>) : Call<ResponseBody>
+
 
     //Templates
     @GET("templates")
@@ -48,6 +55,9 @@ interface Api {
 
     @POST("templates")
     fun createTemplate(@Body template: Template) : Call<Template>
+
+    @DELETE("templates/{id}")
+    fun deleteTemplate(@Path("id") id : String): Call<Template>
 
 
 
